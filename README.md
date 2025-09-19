@@ -11,7 +11,8 @@ ASR Gateway 是一个 **HTTP → FunASR WebSocket** 的中间层，
 - 📊 **调用统计**：次数 + 平均时延  
 - 🔁 **日志统一管理**：控制台 + 文件，支持轮转  
 - 📖 **自定义 Swagger UI**：接口文档可视化  
-- 🛡 **并发控制**：防止服务过载  
+- 🛡 **并发控制**：防止服务过载 
+- 🐳 **Docker Compose 一键部署**：FunASR + Gateway + Nginx
 
 ---
 
