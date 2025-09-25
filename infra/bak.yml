@@ -1,0 +1,57 @@
+services:
+  # -------------------------
+  # FunASR 服务（可扩容）
+  # -------------------------
+  funasr:
+    image: registry.cn-hangzhou.aliyuncs.com/funasr_repo/funasr:funasr-runtime-sdk-cpu-0.4.7
+    command: >
+      bash -c "cd FunASR/runtime && nohup bash run_server.sh
+      --download-model-dir /workspace/models
+      --model-dir damo/SenseVoiceSmall-onnx
+      --punc-dir damo/punc_ct-transformer_cn-en-common-vocab471067-large-onnx
+      --lm-dir damo/speech_ngram_lm_zh-cn-ai-wesp-fst
+      --itn-dir thuduj12/fst_itn_zh
+      --decoder-thread-num 4
+      --model-thread-num 2
+      --hotword /workspace/models/hotwords.txt > log.out 2>&1 & sleep infinity"
+    volumes:
+      - ./funasr_resources/models:/workspace/models
+    expose:
+      - "10095"
+    networks:
+      - asr_net
+
+  # -------------------------
+  # Gateway API 层（可扩容）
+  # -------------------------
+  asr_gateway:
+    image: asr-gateway:prod
+    env_file:
+      - .env
+    environment:
+      - FUNASR_SERVER=wss://funasr:10095
+    expose:
+      - "22800"
+    depends_on:
+      - funasr
+    networks:
+      - asr_net
+
+  # -------------------------
+  # Nginx 负载均衡
+  # -------------------------
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/logs:/var/log/nginx
+    depends_on:
+      - asr_gateway
+    networks:
+      - asr_net
+
+networks:
+  asr_net:
+    driver: bridge
